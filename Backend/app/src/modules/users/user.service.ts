@@ -8,6 +8,7 @@ import { Users, UserDocument } from './entities/entity';
 import { Model, Types } from 'mongoose';
 import { CreateUserDto } from './dto/create-user-dto';
 import * as bcrypt from 'bcrypt';
+import { UpdateUserDto } from './dto/update-user-dto';
 
 @Injectable()
 export class UserService {
@@ -55,6 +56,56 @@ export class UserService {
       password: hashPwd,
       isActive: createUserDto.isActive,
     });
-    return user;
+    return await user.save();
+  }
+
+  async delete(id: string) {
+    // 1. Tenta encontrar e apagar o utilizador ao mesmo tempo
+    const inactiveUser = await this.userModel
+      .findByIdAndUpdate(id, { isActive: false }, { new: true })
+      .exec();
+
+    // 2. Se o resultado for nulo, significa que o utilizador não existe
+    if (!inactiveUser) {
+      throw new NotFoundException(`Usuário não encontrado.`);
+    }
+
+    // 3. Retornamos uma mensagem de sucesso ou o utilizador apagado
+    return {
+      message: 'Utilizador removido com sucesso',
+      id: inactiveUser._id,
+    };
+  }
+
+  async updateUser(id: string, update: UpdateUserDto): Promise<UserDocument> {
+    const putUser = await this.userModel
+      .findOneAndReplace({ _id: id }, update, {
+        new: true,
+        runValidators: true, // Garante que o novo documento respeita as regras do Schema
+      })
+      .exec(); // Melhor tratamento de Promises
+
+    if (!putUser) {
+      throw new NotFoundException('User não encontrado');
+    }
+    return putUser;
+  }
+
+  async patchUser(id: string, update: UpdateUserDto): Promise<UserDocument> {
+    const patchUser = await this.userModel
+      .findByIdAndUpdate(
+        { _id: id },
+        { $set: update }, // O $set garante que apenas os campos enviados mudam
+        {
+          new: true,
+          runValidators: true,
+        },
+      )
+      .exec();
+
+    if (!patchUser) {
+      throw new NotFoundException('User não encontrado');
+    }
+    return patchUser;
   }
 }

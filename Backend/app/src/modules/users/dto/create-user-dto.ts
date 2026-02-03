@@ -4,6 +4,7 @@ import {
   MinLength,
   IsString,
   IsBoolean,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -16,6 +17,7 @@ export class CreateUserDto {
   @MinLength(6, { message: 'A password deve ter pelo menos 6 caracteres' })
   password: string;
 
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 }
