@@ -1,10 +1,20 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common'; // Importa isto
+import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const config = new DocumentBuilder()
+    .setTitle('Gestão Financeira')
+    .setDescription(
+      'Documentação detalhada da minha API de Gestão Financeira em NestJS',
+    )
+    .setVersion('1.0')
+    .addTag('Users', 'Transactions') // Podes agrupar as rotas por tags
+    .build();
 
+  const document = SwaggerModule.createDocument(app, config);
   // Ativa a validação para todos os endpoints da tua API
   app.useGlobalPipes(
     new ValidationPipe({
@@ -13,7 +23,7 @@ async function bootstrap() {
       transform: true, // Converte os tipos automaticamente
     }),
   );
-
+  SwaggerModule.setup('api', app, document); //disponível na rota localhost:3000/api
   await app.listen(3000);
 }
 bootstrap();

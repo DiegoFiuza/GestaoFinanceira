@@ -54,7 +54,6 @@ export class UserService {
     const user = new this.userModel({
       email: createUserDto.email,
       password: hashPwd,
-      isActive: createUserDto.isActive,
     });
     return await user.save();
   }

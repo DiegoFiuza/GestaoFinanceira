@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './modules/users/user.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -9,7 +10,7 @@ import { UserModule } from './modules/users/user.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-
+    ScheduleModule.forRoot(),
     // 2. Usa forRootAsync para injetar a configuração
     MongooseModule.forRootAsync({
       imports: [ConfigModule], // Importa o módulo de config (opcional se isGlobal: true)

@@ -29,6 +29,9 @@ export class Transaction {
 
   @Prop({ type: Types.ObjectId, ref: 'Users', required: true })
   user: Types.ObjectId;
+
+  @Prop({ type: Boolean, required: true, default: true })
+  isActive: boolean;
 }
 
 export const TransactionModel = SchemaFactory.createForClass(Transaction);
