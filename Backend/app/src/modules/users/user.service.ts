@@ -52,6 +52,7 @@ export class UserService {
     const saltRounds = 10;
     const hashPwd = await bcrypt.hash(createUserDto.password, saltRounds);
     const user = new this.userModel({
+      name: createUserDto.name,
       email: createUserDto.email,
       password: hashPwd,
     });

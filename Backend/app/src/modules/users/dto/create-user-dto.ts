@@ -10,6 +10,14 @@ import {
 
 export class CreateUserDto {
   @ApiProperty({
+    example: 'John Doe',
+    description: 'Digite o nome do usuário',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'O nome é obrigatório' })
+  name: string;
+
+  @ApiProperty({
     example: 'example@gmail.com',
     description: 'Digite o e-mail do usuário',
   })

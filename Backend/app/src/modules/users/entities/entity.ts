@@ -7,6 +7,13 @@ export type UserDocument = HydratedDocument<Users>;
 @Schema({ timestamps: true })
 export class Users {
   @ApiProperty({
+    example: 'John Doe',
+    description: 'Digite o nome do usuário',
+  })
+  @Prop({ required: true, lowercase: true })
+  name: string;
+
+  @ApiProperty({
     example: 'example@gmail.com',
     description: 'Digite o e-mail do usuário',
   })
@@ -19,6 +26,15 @@ export class Users {
   })
   @Prop({ required: true, min: 6 })
   password: string;
+
+  @Prop({
+    type: String,
+    required: true,
+    // 2. Definição do Enum para o Mongoose (Verificação em tempo de execução/BD)
+    enum: ['user', 'admin'],
+    default: 'user',
+  })
+  role: string;
 
   @ApiProperty({
     example: 'True | False',

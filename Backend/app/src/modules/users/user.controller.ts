@@ -7,13 +7,20 @@ import {
   Patch,
   Post,
   Put,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user-dto';
 import { UpdateUserDto } from './dto/update-user-dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RolesGuard } from '../auth/guards/role.guard';
+import { Role, Roles } from '../auth/roles.decorator';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @ApiTags('Users')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(Role.Admin)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -61,5 +68,13 @@ export class UserController {
   @Patch(':id')
   patchUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.userService.patchUser(id, dto);
+  }
+
+  @Patch('me')
+  @Roles('user', 'admin') // Ambos podem atualizar o seu próprio perfil
+  patchMe(@Request() req, @Body() dto: UpdateUserDto) {
+    // Pegamos o ID do token que o AuthGuard validou
+    const userId = req.user.sub;
+    return this.userService.patchUser(userId, dto);
   }
 }
