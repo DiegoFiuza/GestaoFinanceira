@@ -28,10 +28,7 @@ export class Transaction {
   recurrencyDay?: number;
 
   @Prop({ type: Types.ObjectId, ref: 'Users', required: true })
-  user: Types.ObjectId;
-
-  @Prop({ type: Boolean, required: true, default: true })
-  isActive: boolean;
+  user: Types.ObjectId | Users;
 }
 
 export const TransactionModel = SchemaFactory.createForClass(Transaction);

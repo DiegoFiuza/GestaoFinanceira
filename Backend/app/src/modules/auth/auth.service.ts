@@ -13,7 +13,7 @@ export class AuthService {
     const user = await this.userService.findByEmail(email);
 
     if (user && (await bcrypt.compare(pwd, user.password))) {
-      const payload = { sub: user.id, email: user.email, role: user.role };
+      const payload = { sub: user._id, email: user.email, role: user.role };
       return { access_token: await this.jwtService.signAsync(payload) };
     }
     throw new UnauthorizedException('Credenciais inválidas');

@@ -71,7 +71,7 @@ export class UserController {
   }
 
   @Patch('me')
-  @Roles('user', 'admin') // Ambos podem atualizar o seu próprio perfil
+  @Roles(Role.User, Role.Admin) // Ambos podem atualizar o seu próprio perfil
   patchMe(@Request() req, @Body() dto: UpdateUserDto) {
     // Pegamos o ID do token que o AuthGuard validou
     const userId = req.user.sub;
