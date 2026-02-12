@@ -28,7 +28,7 @@ export class TransactionService {
         description: dto.description,
         type: dto.type,
         recurrencyDay: dto.recurrencyDay,
-        user: userId,
+        user: new Types.ObjectId(userId),
       });
       if (dto.recurrencyDay && dto.recurrencyDay !== 0) {
         console.log('Criando recorrencia');
@@ -41,7 +41,7 @@ export class TransactionService {
 
   async delete(id: string, userId: string) {
     const transaction = await this.transactionModel
-      .findOneAndDelete({ _id: id, user: userId })
+      .findOneAndDelete({ _id: id, user: new Types.ObjectId(userId) })
       .exec();
 
     if (!transaction) {
@@ -58,7 +58,7 @@ export class TransactionService {
       .findOneAndUpdate(
         {
           _id: id,
-          user: userId,
+          user: new Types.ObjectId(userId),
         },
         { $set: update },
         { new: true, runValidators: true },
@@ -112,64 +112,88 @@ export class TransactionService {
     return this.transactionModel.findById(id).exec();
   }
 
-  async findAllMonth(id: string, year: number, month: number) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59);
+  async findAllMonth(userId: string, year: number, month: number) {
+    // 1. Início do mês: Dia 1 às 00:00:00 UTC
+    const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+
+    // 2. Fim do mês: Dia 0 do mês seguinte às 23:59:59 UTC
+    // (O dia 0 do mês seguinte é automaticamente o último dia do mês atual)
+    const endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+
+    console.log(`--- BUSCA MENSAL (${month}/${year}) ---`);
+    console.log('Início:', startOfMonth.toISOString());
+    console.log('Fim:', endOfMonth.toISOString());
+
     return this.transactionModel
       .find({
-        user: id,
+        user: userId, // Nome do campo conforme seu banco
         createdAt: {
-          $gte: startDate, // Greater than or equal (Maior ou igual)
-          $lte: endDate, // Less than or equal (Menor ou igual)
+          $gte: startOfMonth,
+          $lte: endOfMonth,
         },
       })
       .exec();
   }
 
-  async calcMonth(id: string, year: number, month: number) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59);
-    let sum = 0;
+  async calcMonth(userId: string, year: number, month: number) {
+    // Use a mesma lógica de datas acima
+    const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+    const endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+
     const transactions = await this.transactionModel
       .find({
-        user: id,
-        createdAt: {
-          $gte: startDate, // Greater than or equal (Maior ou igual)
-          $lte: endDate, // Less than or equal (Menor ou igual)
-        },
+        user: userId,
+        createdAt: { $gte: startOfMonth, $lte: endOfMonth },
       })
       .exec();
-    for (const sumTransaction of transactions) {
-      if (
-        sumTransaction.type === 'expensive' ||
-        sumTransaction.type === 'fixed expensive'
-      ) {
-        const intTransaction = Number(sumTransaction.amount);
-        if (!isNaN(intTransaction)) {
-          sum -= intTransaction;
-        }
-      } else if (sumTransaction.type === 'income') {
-        const intTransaction = Number(sumTransaction.amount);
-        if (!isNaN(intTransaction)) {
-          sum += intTransaction;
-        }
-      }
-    }
-    return sum;
+
+    // Exemplo simples de cálculo de balanço (ajuste conforme sua regra de negócio)
+    const income = transactions
+      .filter((t) => t.type === 'income')
+      .reduce((acc, t) => acc + t.amount, 0);
+
+    const expense = transactions
+      .filter((t) => t.type === 'expensive')
+      .reduce((acc, t) => acc + t.amount, 0);
+
+    return {
+      income,
+      expense,
+      balance: income - expense,
+    };
   }
 
-  async findFixedByDay(userId: string, day: number): Promise<Transaction[]> {
-    // O MongoDB já retorna apenas as despesas do dia exato (ex: dia 10)
+  async findFixedByDay(
+    userId: string,
+    day: number,
+    month: number,
+    year: number,
+  ) {
+    // Criamos as datas usando Date.UTC para garantir que 00:00 seja 00:00 no MongoDB
+    // Mês - 1 porque o Date.UTC também usa index 0 para Janeiro
+    const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+    const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+
+    console.log('--- NOVA BUSCA (UTC) ---');
+    console.log('Início:', startOfDay.toISOString()); // Deve aparecer 2026-02-11T00:00:00.000Z
+    console.log('Fim:', endOfDay.toISOString()); // Deve aparecer 2026-02-11T23:59:59.999Z
+
     return this.transactionModel
       .find({
-        name: userId,
-        recurrencyDay: day,
+        user: new Types.ObjectId(userId), // Se continuar vazio, tente: new Types.ObjectId(userId)
+        createdAt: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
       })
       .exec();
   }
 
   async findAllTransaction(userId: string): Promise<Transaction[]> {
-    return this.transactionModel.find({ user: userId }).exec();
+    return this.transactionModel
+      .find({ user: new Types.ObjectId(userId) })
+      .populate('user', 'name')
+      .exec();
   }
 
   async calcAll(id: string) {

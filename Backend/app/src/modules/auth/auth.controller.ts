@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 import { AuthLoginDto } from './dto/auth-login-dto';
 import { UserService } from '../users/user.service';
 import { CreateUserDto } from '../users/dto/create-user-dto';
-import { AuthGuard } from './guards/auth.guard';
+import * as bcrypt from 'bcrypt';
 
 @Controller('auth')
 export class AuthController {
@@ -21,10 +21,11 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  signIn(@Body() dto: AuthLoginDto) {
+  async signIn(@Body() dto: AuthLoginDto) {
     return this.authService.login(dto.email, dto.password);
   }
-  @Post('sigin')
+
+  @Post('signup')
   signUp(@Body() dto: CreateUserDto) {
     return this.userService.create(dto);
   }

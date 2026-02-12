@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './modules/users/user.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AuthModule } from './modules/auth/auth.module';
+import { TransactionModule } from './modules/transactions/transaction.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { ScheduleModule } from '@nestjs/schedule';
       inject: [ConfigService], // Injeta o serviço para ler a variável
     }),
     UserModule,
+    AuthModule,
+    TransactionModule,
   ],
 })
 export class AppModule {}

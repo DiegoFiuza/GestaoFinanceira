@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -63,7 +64,7 @@ export class TransactionController {
     summary: 'Retornar transações',
     description: 'Retornar todas as transações do usuário logado',
   })
-  @Get('all')
+  @Get()
   async getMyTransaction(@Request() req) {
     //recebendo o user do guard
     const userId = req.user.sub;
@@ -100,11 +101,26 @@ export class TransactionController {
     example: '1-31',
   })
   @Get('fix-day')
-  async getByDay(@Request() req, @Query('day') day: string) {
+  async getByDay(
+    @Request() req,
+    @Query('day') day: string,
+    @Query('month') month: string,
+    @Query('year') year: string,
+  ) {
     const userId = req.user.sub;
-    //transformando o que irei receber do front em number
-    const dayNumber = parseInt(day, 10);
-    return this.transactionService.findFixedByDay(userId, dayNumber);
+
+    const d = parseInt(day, 10);
+    const m = parseInt(month, 10); // Esperamos 1-12
+    const y = parseInt(year, 10);
+
+    // Validação: Impede dias menores que 1, maiores que 31 ou meses fora de 1-12
+    if (!d || !m || !y || d < 1 || d > 31 || m < 1 || m > 12 || y < 2000) {
+      throw new BadRequestException(
+        'Data inválida. Forneça dia (1-31), mês (1-12) e ano.',
+      );
+    }
+
+    return this.transactionService.findFixedByDay(userId, d, m, y);
   }
 
   @ApiOperation({
@@ -147,14 +163,19 @@ export class TransactionController {
   ) {
     const userId = req.user.sub;
 
+    // Conversão explícita com fallback para evitar o NaN
     const yearNum = parseInt(year, 10);
     const monthNum = parseInt(month, 10);
 
-    //faço a promisse em paralelo
+    if (isNaN(yearNum) || isNaN(monthNum)) {
+      throw new BadRequestException('Ano e mês devem ser números válidos.');
+    }
+
     const [transactions, calculedBill] = await Promise.all([
       this.transactionService.findAllMonth(userId, yearNum, monthNum),
       this.transactionService.calcMonth(userId, yearNum, monthNum),
     ]);
+
     return { transactions, calculedBill };
   }
 }

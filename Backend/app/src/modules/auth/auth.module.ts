@@ -12,7 +12,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('SECRET'),
-        signOptions: { expiresIn: '1800s' }, // Exemplo: expira em 60 segundos
+        signOptions: { expiresIn: '1800s' },
       }),
     }),
     forwardRef(() => UserModule),
