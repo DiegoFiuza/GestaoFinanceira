@@ -20,7 +20,16 @@ export class AuthService {
 
     if (user && (await bcrypt.compare(pwd, user.password))) {
       const payload = { sub: user._id, email: user.email, role: user.role };
-      return { access_token: await this.jwtService.signAsync(payload) };
+
+      return {
+        access_token: await this.jwtService.signAsync(payload),
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      };
     }
     throw new UnauthorizedException('Credenciais inválidas');
   }

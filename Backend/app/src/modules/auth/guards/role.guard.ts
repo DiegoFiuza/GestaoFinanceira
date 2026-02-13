@@ -18,9 +18,13 @@ export class RolesGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    if (!requiredRoles) return true; // Se não defini role, a rota é livre (mas logada)
+    if (!requiredRoles) return true;
 
     const { user } = context.switchToHttp().getRequest();
+
+    if (!user || !user.role) {
+      throw new ForbiddenException('Usuário não autenticado ou sem permissões');
+    }
 
     // 2. Verificamos se o utilizador tem a role necessária
     const hasRole = requiredRoles.some((role) => user.role === role);

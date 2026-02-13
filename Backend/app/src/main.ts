@@ -2,9 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { ConfigService } from '@nestjs/config';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+  app.use(cookieParser());
+
   const config = new DocumentBuilder()
     .setTitle('Gestão Financeira')
     .setDescription(
@@ -24,6 +29,13 @@ async function bootstrap() {
     }),
   );
   SwaggerModule.setup('api', app, document); //disponível na rota localhost:3000/api
+
+  const origin = configService.get<string>('ORIGIN');
+  app.enableCors({
+    origin: origin?.includes(',') ? origin.split(',') : origin,
+    methods: 'GET,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  }); //habilitado requisições do front
   await app.listen(3000);
 }
 bootstrap();
