@@ -13,7 +13,16 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user-dto';
 import { UpdateUserDto } from './dto/update-user-dto';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { RolesGuard } from '../auth/guards/role.guard';
 import { Role, Roles } from '../auth/roles.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -29,6 +38,7 @@ export class UserController {
     summary: 'Criar usuário',
     description: 'Método para criação do usuário no BD',
   })
+  @ApiBadRequestResponse({ description: 'Dados inválidos' })
   @Post()
   createUser(@Body() dto: CreateUserDto) {
     return this.userService.create(dto);
@@ -37,6 +47,17 @@ export class UserController {
   @ApiOperation({
     summary: 'Retornar usuário',
     description: 'Método para retornar um usuário específico do BD',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'MongoDB ObjectId do usuário',
+  })
+  @ApiOkResponse({
+    description: 'Usuário encontrado',
+  })
+  @ApiNotFoundResponse({
+    description: 'Usuário não encontrado',
   })
   @Get(':id')
   getUser(@Param('id') id: string) {
@@ -47,6 +68,9 @@ export class UserController {
     summary: 'Apagar usuário',
     description: 'Método inativa usuário em aplicação, mas deixa salvo no BD',
   })
+  @ApiParam({ name: 'id', type: String })
+  @ApiOkResponse({ description: 'Usuário inativado com sucesso' })
+  @ApiNotFoundResponse({ description: 'Usuário não encontrado' })
   @Delete(':id') // 1. Adicionamos o parâmetro na rota /users/123
   deleteUser(@Param('id') id: string) {
     return this.userService.delete(id);
@@ -55,6 +79,10 @@ export class UserController {
   @ApiOperation({
     summary: 'Atualizar usuário',
     description: 'Método para atualizar todos os dados do usuário',
+  })
+  @ApiParam({ name: 'id', type: String })
+  @ApiOkResponse({
+    description: 'Usuário atualizado com sucesso',
   })
   @Put(':id')
   putUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
@@ -65,11 +93,25 @@ export class UserController {
     summary: 'Atualizar usuário',
     description: 'Método para atualizar um único dado do usuário',
   })
+  @ApiParam({ name: 'id', type: String })
+  @ApiOkResponse({
+    description: 'Usuário atualizado com sucesso',
+  })
   @Patch(':id')
   patchUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.userService.patchUser(id, dto);
   }
 
+  @ApiOperation({
+    summary: 'Atualizar próprio perfil',
+  })
+  @ApiBearerAuth() // ou cookie auth se estiver usando cookie
+  @ApiOkResponse({
+    description: 'Perfil atualizado com sucesso',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token inválido ou ausente',
+  })
   @Patch('me')
   @Roles(Role.User, Role.Admin) // Ambos podem atualizar o seu próprio perfil
   patchMe(@Request() req, @Body() dto: UpdateUserDto) {

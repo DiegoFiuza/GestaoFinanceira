@@ -11,7 +11,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateTransactionDto } from './dto/create-transaction-dto';
@@ -19,6 +19,7 @@ import { RolesGuard } from '../auth/guards/role.guard';
 import { Role, Roles } from '../auth/roles.decorator';
 import { UpdateTransactionDto } from './dto/update-transaction-dto';
 
+@ApiTags('Transactions')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(Role.Admin, Role.User)
 @Controller('transactions')

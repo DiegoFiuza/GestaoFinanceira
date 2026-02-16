@@ -11,7 +11,17 @@ import { AuthLoginDto } from './dto/auth-login-dto';
 import { UserService } from '../users/user.service';
 import { CreateUserDto } from '../users/dto/create-user-dto';
 import * as express from 'express';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -19,20 +29,30 @@ export class AuthController {
     private readonly userService: UserService,
   ) {}
 
+  @ApiOperation({
+    summary: 'Realizar login',
+    description: 'Autentica o usuário e retorna cookie HTTP-only com JWT',
+  })
+  @ApiBody({ type: AuthLoginDto })
+  @ApiOkResponse({
+    description: 'Login realizado com sucesso',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Credenciais inválidas',
+  })
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async signIn(
     @Body() dto: AuthLoginDto,
-    @Res({ passthrough: true }) response: express.Response, // Acessa a resposta
+    @Res({ passthrough: true }) response: express.Response,
   ) {
     const loginData = await this.authService.login(dto.email, dto.password);
 
-    // Salva o token no cookie
     response.cookie('access_token', loginData.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Apenas HTTPS em prod
-      sameSite: 'lax', // Proteção contra CSRF
-      maxAge: 1000 * 60 * 60 * 24, // Expira em 24h (ms)
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24,
     });
 
     return {
@@ -41,8 +61,18 @@ export class AuthController {
     };
   }
 
-  @Post('logout')
+  @ApiOperation({
+    summary: 'Realizar logout',
+    description: 'Remove o cookie de autenticação',
+  })
+  @ApiOkResponse({
+    description: 'Logout realizado com sucesso',
+    schema: {
+      example: { message: 'Logout realizado com sucesso' },
+    },
+  })
   @HttpCode(HttpStatus.OK)
+  @Post('logout')
   async logout(@Res({ passthrough: true }) response: express.Response) {
     response.clearCookie('access_token', {
       httpOnly: true,
@@ -53,6 +83,17 @@ export class AuthController {
     return { message: 'Logout realizado com sucesso' };
   }
 
+  @ApiOperation({
+    summary: 'Cadastrar novo usuário',
+    description: 'Cria uma nova conta na aplicação',
+  })
+  @ApiBody({ type: CreateUserDto })
+  @ApiCreatedResponse({
+    description: 'Usuário criado com sucesso',
+  })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos',
+  })
   @Post('signup')
   signUp(@Body() dto: CreateUserDto) {
     return this.userService.create(dto);
