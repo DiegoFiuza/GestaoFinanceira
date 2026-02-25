@@ -35,6 +35,7 @@ async function bootstrap() {
     origin: origin?.includes(',') ? origin.split(',') : origin,
     methods: 'GET,PUT,PATCH,POST,DELETE',
     credentials: true,
+    allowedHeaders: 'Content-Type, Authorization, Accept',
   }); //habilitado requisições do front
   await app.listen(3000);
 }

@@ -197,24 +197,29 @@ export class TransactionService {
   }
 
   async calcAll(id: string) {
-    let sum = 0;
+    let totalIncome = 0;
+    let totalExpensive = 0;
+
     const transactions = await this.findAllTransaction(id);
-    for (const sumTransaction of transactions) {
-      if (
-        sumTransaction.type === 'expensive' ||
-        sumTransaction.type === 'fixed expensive'
-      ) {
-        const intTransaction = Number(sumTransaction.amount);
-        if (!isNaN(intTransaction)) {
-          sum -= intTransaction;
-        }
-      } else if (sumTransaction.type === 'income') {
-        const intTransaction = Number(sumTransaction.amount);
-        if (!isNaN(intTransaction)) {
-          sum += intTransaction;
-        }
+
+    for (const t of transactions) {
+      const amount = Number(t.amount);
+      if (isNaN(amount)) continue;
+
+      if (t.type === 'income') {
+        totalIncome += amount;
+      } else if (t.type === 'expensive' || t.type === 'fixed expensive') {
+        totalExpensive += amount;
       }
     }
-    return sum;
+
+    return {
+      allBilled: {
+        total: totalIncome - totalExpensive,
+        totalIncome,
+        totalExpensive,
+      },
+      transactions, // Retorna a lista completa aqui também
+    };
   }
 }

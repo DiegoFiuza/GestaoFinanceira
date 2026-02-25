@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  # Base de Dados
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  # NestJS API
+  backend:
+    build: ./Backend/app
+    container_name: nest_api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+    environment:
+      # Importante: o host é 'mongodb' porque é o nome do serviço acima
+      - MONGODB_URI=mongodb://mongodb:27017/meu_projeto
+      - PORT=3000
+
+  # Next.js Web
+  frontend:
+    build: ./Frontend/app
+    container_name: next_web
+    ports:
+      - "3001:3000" # Acedemos em http://localhost:3001
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+
+volumes:
+  mongo-data:
